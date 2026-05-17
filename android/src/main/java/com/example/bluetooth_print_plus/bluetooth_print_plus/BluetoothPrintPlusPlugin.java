@@ -249,25 +249,40 @@ public class BluetoothPrintPlusPlugin
   private void startScan(Result result) {
     LogUtils.i(TAG, "start scan...");
     try {
-      String[] perms = {
-          Manifest.permission.BLUETOOTH,
-          Manifest.permission.BLUETOOTH_ADMIN,
-          Manifest.permission.BLUETOOTH_CONNECT,
-          Manifest.permission.BLUETOOTH_SCAN,
-          Manifest.permission.ACCESS_FINE_LOCATION,
-      };
+      // Android's Bluetooth permission model split at API 31 (Android 12).
+      // Pre-31: BLUETOOTH and BLUETOOTH_ADMIN are install-time "normal"
+      // perms; runtime needs ACCESS_FINE_LOCATION because BT scan results
+      // could reveal location. API 31+: BLUETOOTH_SCAN and BLUETOOTH_CONNECT
+      // are runtime perms; ACCESS_FINE_LOCATION is no longer required if
+      // BLUETOOTH_SCAN is flagged with usesPermissionFlags="neverForLocation"
+      // (declared in this plugin's AndroidManifest). Asking for the wrong
+      // set on either side returns "permanently denied" forever.
+      final String[] perms;
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        perms = new String[]{
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+        };
+      } else {
+        perms = new String[]{
+            Manifest.permission.ACCESS_FINE_LOCATION,
+        };
+      }
       if (EasyPermissions.hasPermissions(this.context, perms)) {
         // Already have permission, do the thing
         startScan();
+        result.success(null);
       } else {
-        // Do not have permissions, request them now
+        // Stash the result so onRequestPermissionsResult can complete it.
+        // Without this, the callback dereferences a null Result and NPEs
+        // the activity on permission denial.
+        pendingResult = result;
         EasyPermissions.requestPermissions(
                 this.activity,
-                "Bluetooth requires location permission!!!",
+                "Bluetooth requires permission to scan for devices",
                 REQUEST_LOCATION_PERMISSIONS,
                 perms);
       }
-      result.success(null);
     } catch (Exception e) {
       result.error("startScan", e.getMessage(), e);
     }
@@ -362,11 +377,22 @@ public class BluetoothPrintPlusPlugin
   public boolean onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
     LogUtils.d(TAG, "onRequestPermissionsResult");
     if (requestCode == REQUEST_LOCATION_PERMISSIONS) {
-      if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+      // Defensive null/length guards: upstream dereferenced grantResults[0]
+      // and pendingResult unconditionally, NPE'ing on certain devices where
+      // grantResults arrives empty or the request raced ahead of the stash.
+      final boolean granted =
+          grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+      if (granted) {
         startScan();
+        if (pendingResult != null) {
+          pendingResult.success(null);
+          pendingResult = null;
+        }
       } else {
-        pendingResult.error("no_permissions", "this plugin requires location permissions for scanning", null);
-        pendingResult = null;
+        if (pendingResult != null) {
+          pendingResult.error("no_permissions", "this plugin requires bluetooth permissions for scanning", null);
+          pendingResult = null;
+        }
       }
       return true;
     }

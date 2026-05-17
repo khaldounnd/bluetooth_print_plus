@@ -23,7 +23,11 @@ apply plugin: 'com.android.library'
 
 android {
     namespace "com.example.bluetooth_print_plus.bluetooth_print_plus"
-    compileSdkVersion 31
+    // Bumped from 31 to 34 so usesPermissionFlags="neverForLocation"
+    // and BLUETOOTH_SCAN / BLUETOOTH_CONNECT (API 31+) resolve cleanly
+    // against Android Tiramisu (API 33) and Upside Down Cake (API 34)
+    // build SDKs.
+    compileSdkVersion 34
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

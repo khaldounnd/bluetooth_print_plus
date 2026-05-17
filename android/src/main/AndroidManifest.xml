@@ -1,10 +1,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
   package="com.example.bluetooth_print_plus.bluetooth_print_plus">
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+
+    <!-- Legacy permissions: install-time on API ≤ 30 (Android 11 and below).
+         maxSdkVersion="30" tells Android 12+ to ignore these so they don't
+         show up in app perm listings on newer devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH"
+                     android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+                     android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+                     android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"
+                     android:maxSdkVersion="30" />
+
+    <!-- Modern runtime perms: API 31+ (Android 12+).
+         neverForLocation flag tells the OS we won't use scan results to
+         infer device location, so fine-location is no longer required on
+         these API levels and the system dialog reads "find nearby devices"
+         instead of the more invasive location-flavored copy. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                     android:usesPermissionFlags="neverForLocation"
+                     tools:targetApi="s" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 </manifest>

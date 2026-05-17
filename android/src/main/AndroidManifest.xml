@@ -2,17 +2,21 @@
   xmlns:tools="http://schemas.android.com/tools"
   package="com.example.bluetooth_print_plus.bluetooth_print_plus">
 
-    <!-- Legacy permissions: install-time on API ≤ 30 (Android 11 and below).
-         maxSdkVersion="30" tells Android 12+ to ignore these so they don't
-         show up in app perm listings on newer devices. -->
+    <!-- Legacy BT-only permissions: install-time on API ≤ 30 (Android 11
+         and below). maxSdkVersion="30" tells Android 12+ to ignore these
+         so they don't show up in app perm listings on newer devices. -->
     <uses-permission android:name="android.permission.BLUETOOTH"
                      android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
                      android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
-                     android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"
-                     android:maxSdkVersion="30" />
+
+    <!-- Location is required on API ≤ 30 for BT scanning. Declared
+         without maxSdkVersion so the manifest merger doesn't propagate
+         a cap to host apps that need location for unrelated features
+         (Geolocator, etc.). Host apps can apply their own cap or
+         override if they want. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- Modern runtime perms: API 31+ (Android 12+).
          neverForLocation flag tells the OS we won't use scan results to
